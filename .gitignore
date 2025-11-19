@@ -1,0 +1,16 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Output of build
+/bin/
+/build/
+/dist/
+
+# IDE stuff
+.vscode/
+.idea/
+*.swp
