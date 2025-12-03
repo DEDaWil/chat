@@ -24,11 +24,14 @@ func serveWs(hub *Hub, c *gin.Context) {
 		return
 	}
 
+	// Создаёт нового клиента:
 	client := NewClient(hub, conn)
+	// Регистрирует клиента в чате:
 	hub.register <- client
 
-	go client.writePump()
-	go client.readPump()
+	// Запускает два бесконечных цикла:
+	go client.writePump() // слушает сообщения от клиента
+	go client.readPump()  // отправляет сообщения к клиенту
 }
 
 func main() {

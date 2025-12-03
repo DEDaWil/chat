@@ -16,10 +16,10 @@ const (
 )
 
 type Client struct {
-	id   uuid.UUID
-	hub  *Hub
-	conn *websocket.Conn
-	send chan []byte
+	id   uuid.UUID       // для идентификации (может пригодиться в будущем)
+	hub  *Hub            // ссылка на “центр чата”
+	conn *websocket.Conn // настоящее WebSocket соединение
+	send chan []byte     // канал, по которому сервер будет слать сообщения клиенту
 }
 
 func NewClient(hub *Hub, conn *websocket.Conn) *Client {
@@ -31,6 +31,13 @@ func NewClient(hub *Hub, conn *websocket.Conn) *Client {
 	}
 }
 
+// клиент ПРИНИМАЕТ сообщения
+//
+// Этот цикл:
+//
+//	ждёт, когда клиент отправит что-нибудь
+//	читает сообщение
+//	передаёт его хабу для рассылки
 func (c *Client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
@@ -54,6 +61,12 @@ func (c *Client) readPump() {
 	}
 }
 
+// клиент ОТПРАВЛЯЕТ сообщения
+//
+// Этот цикл:
+//
+//	слушает канал send
+//	всё, что туда прилетает, пишется в WebSocket клиенту
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
