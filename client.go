@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
@@ -52,12 +53,38 @@ func (c *Client) readPump() {
 	})
 
 	for {
-		_, message, err := c.conn.ReadMessage()
+		_, raw, err := c.conn.ReadMessage()
 		if err != nil {
 			log.Println("read:", err)
 			break
 		}
-		c.hub.broadcast <- message
+
+		// Пытаемся распарсить как JSON от клиента
+		var msg Message
+		if err := json.Unmarshal(raw, &msg); err != nil {
+			// если что-то не так — просто логируем как сырую строку
+			log.Printf("raw msg from %s: %s", c.id.String(), string(raw))
+			// и пересылаем, как раньше
+			c.hub.broadcast <- raw
+			continue
+		}
+
+		// Добавляем серверные поля
+		msg.Time = time.Now().Format(time.RFC3339)
+		msg.ClientID = c.id.String()
+
+		// Логируем красиво
+		log.Printf("user=%s id=%s time=%s text=%q",
+			msg.User, msg.ClientID, msg.Time, msg.Text)
+
+		// Отправляем всем уже "нормализованный" JSON
+		normalized, err := json.Marshal(msg)
+		if err != nil {
+			log.Println("json marshal error:", err)
+			continue
+		}
+
+		c.hub.broadcast <- normalized
 	}
 }
 

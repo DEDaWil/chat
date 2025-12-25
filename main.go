@@ -35,6 +35,8 @@ func serveWs(hub *Hub, c *gin.Context) {
 }
 
 func main() {
+	initLogger()
+
 	hub := NewHub()
 	go hub.Run()
 
